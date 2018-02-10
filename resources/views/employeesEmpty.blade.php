@@ -1,0 +1,1 @@
+<div class="notFound">Ничего не найдено!</div>
