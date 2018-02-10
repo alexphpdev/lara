@@ -15,7 +15,7 @@ class EmployeesTreeGenerator{
 	 */
 	static function generate() {
 		// сколько всего сотрудников в фирме
-		$amount_employees = rand(50000, 60000);
+		$amount_employees = 500; //rand(50000, 60000);
 
 		// сколько человек = 1 проценту от общего числа
 		$one_persent_employees = $amount_employees / 100;
