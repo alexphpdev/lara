@@ -337,7 +337,7 @@ class Index extends Model
                 'error_msg' => 'Забыли указать начальника',
             ];
             $error = 1;
-        } elseif(empty($boss_string) || empty($boss_id) || empty($boss_employee_id) || empty($boss_deep_level)) {
+        } elseif(empty($boss_string) || empty($boss_id)) {
             $data['boss'] = [
                 'value_boss_string'     => '',
                 'error_msg' => 'Ошибка заполнения поля начальника',
