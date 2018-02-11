@@ -282,6 +282,8 @@ $(function(){
 			type: url.split('/')[5]
 		};
 
+		$("#searchForm .searchField").val('');
+
 		$.ajax({
 			url: url,
 			type: 'post',

@@ -164,6 +164,9 @@ class Index extends Model
 
             self::$employees = $q->get();
             foreach(self::$employees as &$employee) {
+
+                if(isset($employee->hiring_date)) $employee->hiring_date = date('d-m-Y', $employee->hiring_date);
+
                 if(empty($employee->img)) $employee->img = '/img/avatars/thumbnails/noAvatar.png';
                 else $employee->img = '/img/avatars/thumbnails/' . $employee->img;
             }
