@@ -141,11 +141,9 @@ class Index extends Model
     	return $res;
     }
 
-    static function searchEmployees($searchString) {
+    static function searchEmployees($searchString, $field = null, $type = null) {
 
         $q = DB::table('employees')
-            ->orderBy('deep_level')
-            ->orderBy('employee_id')
             ->where('employee_id', 'like', '%'.$searchString.'%')
             ->orWhere('f', 'like', '%'.$searchString.'%')
             ->orWhere('i', 'like', '%'.$searchString.'%')
@@ -160,15 +158,34 @@ class Index extends Model
             $q->orWhere('hiring_date', 'like', $formatedDate);
         }
 
-        self::$employees = $q->get();
-        
-        self::sortEmployees();
+        if($field && $type) {
+            $q
+                ->orderBy($field, $type);
 
-        $res = [];
-        foreach (self::$sortedEmployees as $v) {
-            $res[] = $v;
+            self::$employees = $q->get();
+            foreach(self::$employees as &$employee) {
+                if(empty($employee->img)) $employee->img = '/img/avatars/thumbnails/noAvatar.png';
+                else $employee->img = '/img/avatars/thumbnails/' . $employee->img;
+            }
+
+            return self::$employees;            
+
+        } else {
+            $q
+                ->orderBy('deep_level')
+                ->orderBy('employee_id');
+
+            self::$employees = $q->get();
+            
+            self::sortEmployees();
+
+            $res = [];
+            foreach (self::$sortedEmployees as $v) {
+                $res[] = $v;
+            }
+            return $res;
         }
-        return $res;
+        
     }
 
     static function searchBosses($searchString) {

@@ -65,7 +65,7 @@ class IndexController extends Controller
 
     public function searchAJAX($searchString) {
         $data = [
-            'employees' => Index::searchEmployees($searchString),
+            'employees' => Index::searchEmployees($searchString, $_POST['field'], $_POST['type']),
         ];
 
         echo json_encode($data, JSON_FORCE_OBJECT);

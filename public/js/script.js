@@ -1,6 +1,6 @@
 $(function(){
 
-	// необходима для правильного вывода дочерних элементов после сортировки или сброса фильтров
+	// необходим для правильного вывода дочерних элементов после сортировки или сброса фильтров
 	var globalSortType = {
 		field: 'employee_id',
 		type: 'asc'
@@ -266,6 +266,8 @@ $(function(){
 				$(".items").empty().append(html);
 
 				dnd();
+
+				$("#searchForm input").val('');
 			}
 		})
 	}
@@ -330,10 +332,16 @@ $(function(){
 
 		var url = '/secret/adminPage/search/' + searchString;
 
-		$(".header .caret").remove();
+		var data = {
+			'field': globalSortType.field,
+			'type': globalSortType.type
+		};
+
+		//$(".header .caret").remove();
 		$.ajax({
 			type: 'post',
 			url: url,
+			data: data,
 			beforeSend: function(){
 			    $('#preloader, #dark_bg').fadeIn( "slow" );
 			},
@@ -435,7 +443,7 @@ $(function(){
 		    var id = ui.draggable.siblings('a').eq(0).data('item-id');
 		    var boss_id = $(this).siblings('a').eq(0).data('item-id');
 
-		    var data = changeBoss(id, boss_id);
+		    changeBoss(id, boss_id);
 		  }
 		});
 	}
@@ -457,66 +465,73 @@ $(function(){
 				res = JSON.parse(res);
 
 				if(!res) return;
-
-
-				// 
-				var $el = $("a[data-item-id='"+data.id+"']");
-
-				$el.siblings('.item').removeClass(function (index, className) {
-				    return (className.match (/(^|\s)lvl\d+/g) || []).join(' ');
-				});
-
-				$el.siblings('.item').addClass('lvl' + res.new_deep_level);
-
-				var $boss = $("a[data-item-id='"+res.new_boss_id+"']").parents('.itemWrapper');
-				$el.parents('.itemWrapper').insertAfter($boss);
-
-				// end --
-
-				// если есть новый суперБосс, то ставим его на самый верх
+				
+				// если перетаскиваем суперБосса
 				if(res.new_super_boss_id) {
-					var $superBoss = $("a[data-item-id='"+res.new_super_boss_id+"']")
-					$superBoss.siblings('.item').removeClass(function (index, className) {
+
+					// удаляем старого босса
+					$("div.lvl0").parents('.itemWrapper').remove()
+
+					var $superBoss = $("a[data-item-id='"+res.new_super_boss_id+"']");
+					var $bossItem = $superBoss.siblings('.item');
+					if($bossItem.hasClass('opened')) $bossItem.trigger('click');
+
+					$bossItem.removeClass(function (index, className) {
 				    	return (className.match (/(^|\s)lvl\d+/g) || []).join(' ');
 					});
-					$superBoss.siblings('.item').addClass('lvl0');
+					$bossItem.addClass('lvl0');
 					$superBoss.parents('.itemWrapper').prependTo('.items');
 				}
 
-				if(res.subs_list){
+				var $dragParentLvl1;
+				var $dragItem = $("a[data-item-id='"+data.id+"']").parents('.itemWrapper');
 
-					for(var el in res.subs_list) {
-						var id = res.subs_list[el];
+				var $dropParentLvl1;
+				var $dropItem = $("a[data-item-id='"+res.new_boss_id+"']").parents('.itemWrapper');
 
-						var $item = $("a[data-item-id='"+el+"']").parents('.itemWrapper');
-						var localBoss = $("a[data-item-id='"+res.neighbor_id+"']").parents('.itemWrapper');
-						$item.insertAfter(localBoss);
+				if($dragItem.has(".item.lvl1").size()){
+					$dragParentLvl1 = $dragItem;
 
-						if( typeof id == 'object') moveElement(id, el);
+					// закрыть и удалить
+					if($dragParentLvl1.find(".item.lvl1.opened").size()) $dragParentLvl1.find(".item.lvl1.opened").trigger('click');
+					$dragParentLvl1.remove();
+				} else {
+					$dragParentLvl1 = $dragItem.prevAll('.itemWrapper').has(".item.lvl1").eq(0);
+
+
+					// если перемещяем работника на 1ый уровень, т.е. в подчинение суперБоссу
+					if($dropItem.has(".item.lvl0").size()){
 						
+						$dragItem.insertAfter($("div.lvl0").parents('.itemWrapper'));
+						$dragItem.find('.item').removeClass(function (index, className) {
+				    		return (className.match (/(^|\s)lvl\d+/g) || []).join(' ');
+						});
+						$dragItem.find('.item').addClass('lvl1');
+
 					}
 
-					function moveElement(element, parent) {
-						for(var i in element) {
-							var id = element[i];
-							
-							if( typeof id == 'object') {
-								if(id instanceof Array) {
-									var $item = $("a[data-item-id='"+i+"']").parents('.itemWrapper');
-									var localBoss = $("a[data-item-id='"+parent+"']").parents('.itemWrapper');
-									$item.insertAfter(localBoss);
-									parent = i;
-								}
-								moveElement(id, parent);
-							} else {
-								
-								var $item = $("a[data-item-id='"+id+"']").parents('.itemWrapper');
-								var localBoss = $("a[data-item-id='"+parent+"']").parents('.itemWrapper');
-								$item.insertAfter(localBoss);
-							}
-						}
-						
-					} 						
+
+
+					// закрыть открыть
+					$dragParentLvl1.find(".item.lvl1").trigger('click');
+					$dragParentLvl1.find(".item.lvl1").trigger('click');
+				}
+
+				if($dropItem.has(".item.lvl1").size()){
+					$dropParentLvl1 = $dropItem;
+				} else {
+					$dropParentLvl1 = $dropItem.prevAll('.itemWrapper').has(".item.lvl1").eq(0);
+				}
+
+				if($dragParentLvl1 != $dropParentLvl1){
+					// закрыть открыть
+					if($dropParentLvl1.find(".item.lvl1.opened").size() == 1){
+						$dropParentLvl1.find(".item.lvl1").trigger('click');
+						$dropParentLvl1.find(".item.lvl1").trigger('click');
+					}else{
+						// открыть
+						$dropParentLvl1.find(".item.lvl1").trigger('click');
+					}
 				}
 			}
 		})
@@ -541,11 +556,11 @@ $(function(){
 				$(el).remove();
 			});
 
-			$parent.toggleClass('opened');
+		 	$parent.toggleClass('opened');
 
 
-			return;
-		}
+		 	return;
+		 }
 
 		var id = $parent.siblings('a').eq(0).data('item-id');
 
